@@ -26,9 +26,10 @@ print('Training set', trainData.shape, trainLabels.shape)
 print('Test set', testData.shape, testLabels.shape)
 
 
-batch_size = 16
+batch_size = 128
 patch_size = 5
-depth = 16
+depth1 = 20
+depth2 = 50
 num_hidden = 64
 num_hidden2 = 32
 image_size = 28
@@ -45,20 +46,19 @@ with graph.as_default():
     tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, num_labels))
 
     tf_test_dataset = tf.constant(testData)
-    tf_test_labels = tf.constant(testLabels)
 
     # First CONV layer variables, in truncated normal distribution.
     layer1_weights = tf.Variable(tf.truncated_normal(
-        [patch_size, patch_size, num_channels, depth], stddev=0.1))
-    layer1_biases = tf.Variable(tf.zeros([depth]))
+        [patch_size, patch_size, num_channels, depth1], stddev=0.1))
+    layer1_biases = tf.Variable(tf.zeros([depth1]))
 
     # dropout parameter
     keep_prob = tf.placeholder("float")
 
     # Second CONV layer variables
     layer2_weights = tf.Variable(tf.truncated_normal(
-      [patch_size, patch_size, depth, depth], stddev=0.1))
-    layer2_biases = tf.Variable(tf.constant(1.0, shape=[depth]))
+      [patch_size, patch_size, depth1, depth2], stddev=0.1))
+    layer2_biases = tf.Variable(tf.constant(1.0, shape=[depth2]))
 
     # Three FC layer variables
     layer3_weights = tf.Variable(tf.truncated_normal(
@@ -71,8 +71,8 @@ with graph.as_default():
 
     layer5_weights = tf.Variable(tf.truncated_normal(
       [num_hidden2, num_labels], stddev=0.1))
-    layer5_biases = tf.Variable(tf.constant(1.0, shape=[num_labels]))
-  
+    layer5_biases = tf.Variable(tf.constant(1.0, shape=[num_labels]))    
+
     # Model.
     def model(data):
         # The convolutional model above uses convolutions with stride 2 to reduce
@@ -106,13 +106,9 @@ with graph.as_default():
         # norm2, alpha=alpha=0.1;  Test accuracy: 90.4% 
 
         # layer3
-        conv = tf.nn.conv2d(norm2, layer2_weights, [1, 1, 1, 1], padding='SAME')
-        hidden = tf.nn.relu(conv + layer2_biases)
 
-
-
-        shape = hidden.get_shape().as_list()
-        reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
+        shape = norm2.get_shape().as_list()
+        reshape = tf.reshape(norm2, [shape[0], shape[1] * shape[2] * shape[3]])
 
         # RELU
         hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
@@ -145,22 +141,27 @@ with graph.as_default():
     train_prediction = tf.nn.softmax(logits)
     test_prediction = tf.nn.softmax(model(tf_test_dataset))
     
-num_steps = 1000
+num_steps = 5000
 
 with tf.Session(graph=graph) as session:
-    tf.global_variables_initializer().run()
+    tf.initialize_all_variables().run()
     print('Initialized')
     for step in range(num_steps):
-        offset = (step * batch_size) % (trainLabels.shape[0] - batch_size)
-        batch_data = trainData[offset:(offset + batch_size), :, :, :]
-        batch_labels = trainLabels[offset:(offset + batch_size), :]
+        # stochastic gradient descent
+        batch_index = np.random.choice(trainLabels.shape[0], batch_size)
+        batch_data = trainData[batch_index]
+        batch_labels = trainLabels[batch_index]
+        # batch gradient descent
+        #offset = (step * batch_size) % (trainLabels.shape[0] - batch_size)
+        #batch_data = trainData[offset:(offset + batch_size), :, :, :]
+        #batch_labels = trainLabels[offset:(offset + batch_size), :]
         feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels,keep_prob:1.0}
-test_label
+        
         _, l, predictions = session.run(
             [optimizer, loss, train_prediction], feed_dict=feed_dict)
         if (step % 50 == 0):
             print('Minibatch loss at step %d: %f' % (step, l))
             print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
-            print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), tf_test_labels))
+            print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
             
-    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), tf_test_labels))   
+    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))   
