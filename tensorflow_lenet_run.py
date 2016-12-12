@@ -134,7 +134,17 @@ with graph.as_default():
     # Learning rate decay
     global_step = tf.Variable(0, trainable=False)
     starter_learning_rate = 0.001
-    learning_rate = tf.tnum_steps = 1000
+    learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
+                                           100000, 0.96, staircase=True)
+
+
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+
+    # Predictions for the training, validation, and test data.
+    train_prediction = tf.nn.softmax(logits)
+    test_prediction = tf.nn.softmax(model(tf_test_dataset))
+    
+num_steps = 1000
 
 with tf.Session(graph=graph) as session:
     tf.global_variables_initializer().run()
@@ -152,13 +162,4 @@ with tf.Session(graph=graph) as session:
             print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
             print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), test_labels))
             
-    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), test_labels))   rain.exponential_decay(starter_learning_rate, global_step,
-                                           100000, 0.96, staircase=True)
-
-
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
-
-    # Predictions for the training, validation, and test data.
-    train_prediction = tf.nn.softmax(logits)
-    test_prediction = tf.nn.softmax(model(tf_test_dataset))
-    
+    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), test_labels))   
