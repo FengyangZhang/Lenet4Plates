@@ -45,6 +45,7 @@ with graph.as_default():
     tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, num_labels))
 
     tf_test_dataset = tf.constant(testData)
+    tf_test_labels = tf.constant(testLabels)
 
     # First CONV layer variables, in truncated normal distribution.
     layer1_weights = tf.Variable(tf.truncated_normal(
@@ -154,12 +155,12 @@ with tf.Session(graph=graph) as session:
         batch_data = trainData[offset:(offset + batch_size), :, :, :]
         batch_labels = trainLabels[offset:(offset + batch_size), :]
         feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels,keep_prob:1.0}
-
+test_label
         _, l, predictions = session.run(
             [optimizer, loss, train_prediction], feed_dict=feed_dict)
         if (step % 50 == 0):
             print('Minibatch loss at step %d: %f' % (step, l))
             print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
-            print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), test_labels))
+            print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), tf_test_labels))
             
-    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), test_labels))   
+    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), tf_test_labels))   
