@@ -27,7 +27,7 @@ print('Training set', trainData.shape, trainLabels.shape)
 print('Test set', testData.shape, testLabels.shape)
 
 # constructing the graph
-batch_size = 128
+batch_size = 50
 patch_size = 5
 depth = (20, 50)
 num_hidden = (64, 32)
@@ -62,16 +62,16 @@ with graph.as_default():
 
     # Three FC layer variables
     layer3_weights = tf.Variable(tf.truncated_normal(
-      [image_size // 4 * image_size // 4 * depth[1], num_hidden[0]], stddev=0.1))
+      [image_height // 4 * image_width // 4 * depth[1], num_hidden[0]], stddev=0.1))
     layer3_biases = tf.Variable(tf.zeros(num_hidden[0]))
 
     layer4_weights = tf.Variable(tf.truncated_normal(
       [num_hidden[0], num_hidden[1]], stddev=0.1))
-    layer4_biases = tf.Variable(tf.zeors(num_hidden[1]))
+    layer4_biases = tf.Variable(tf.zeros(num_hidden[1]))
 
     layer5_weights = tf.Variable(tf.truncated_normal(
       [num_hidden[1], num_labels], stddev=0.1))
-    layer5_biases = tf.Variable(tf.zeors(num_labels))    
+    layer5_biases = tf.Variable(tf.zeros(num_labels))    
 
     # Model.
     def model(data):
@@ -119,13 +119,13 @@ with graph.as_default():
 
     # Learning rate decay
     global_step = tf.Variable(0, trainable=False)
-    starter_learning_rate = 0.001
+    starter_learning_rate = 1e-4
     learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
                                            100000, 0.96, staircase=True)
 
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
-num_steps = 5000
+num_steps = 20000
 
 with tf.Session(graph=graph) as session:
     tf.initialize_all_variables().run()
@@ -139,11 +139,11 @@ with tf.Session(graph=graph) as session:
         #offset = (step * batch_size) % (trainLabels.shape[0] - batch_size)
         #batch_data = trainData[offset:(offset + batch_size), :, :, :]
         #batch_labels = trainLabels[offset:(offset + batch_size), :]
-        feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels, keep_prob:1.0}
+        feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels, keep_prob:0.5}
         
         _, l, predictions = session.run(
             [optimizer, loss, train_prediction], feed_dict=feed_dict)
-        if (step % 50 == 0):
+        if (step % 100 == 0):
             print('Minibatch loss at step %d: %f' % (step, l))
             print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
             print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
