@@ -29,7 +29,8 @@ print "[INFO] loading features..."
 features = open("../data/matrices.txt")
 print "[INFO] finished loading features from ../data/matrices.txt."
 totalData = features.readline().strip('\t').split('\t')
-totalData = np.asarray(trainData, dtype='int32').reshape((-1, 28, 18))
+totalData = np.asarray(totalData, dtype='float32').reshape((-1, 28, 18))
+totalData = totalData / 255
 split = (int)(0.9 * totalData.shape[0])
 trainData = totalData[:split]
 testData = totalData[split:]
@@ -37,7 +38,11 @@ testData = totalData[split:]
 print "[INFO] loading labels..."
 labels = open("../data/classes.txt")
 print "[INFO] finished loading labels from ../data/classes.txt."
-totalData
+totalLabels = labels.readline().strip('\t').split('\t')
+print totalLabels
+totalLabels = np.asarray(totalLabels, dtype='int32').reshape((-1, 1))
+trainLabels = totalLabels[:split]
+testLabels = totalLabels[split:]
 trainData, trainLabels = reformat(trainData, trainLabels)
 testData, testLabels = reformat(testData, testLabels)
 print('Training set', trainData.shape, trainLabels.shape)
