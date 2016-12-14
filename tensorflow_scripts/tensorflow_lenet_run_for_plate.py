@@ -14,11 +14,21 @@ ap.add_argument("-w", "--model_path", type=str,
     help="(optional) path to weights file")
 args = vars(ap.parse_args())
 
+# declare some hyperparameters
+batch_size = 50
+patch_size = 5
+depth = (32, 64)
+num_hidden = 1024
+image_height = 28
+image_width = 18
+num_labels = 10
+num_channels = 1
+
 # Preprocessing
 def reformat(dataset, labels):
     dataset = dataset.reshape(
-        (-1, 28, 18, 1)).astype(np.float32)
-    labels = (np.arange(10) == labels[:,None]).astype(np.float32)
+        (-1, image_height, image_width, nuum_channels)).astype(np.float32)
+    labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
     return dataset, labels
 
 def accuracy(predictions, labels):
@@ -29,7 +39,7 @@ print "[INFO] loading features..."
 features = open("../data/matrices.txt")
 print "[INFO] finished loading features from ../data/matrices.txt."
 totalData = features.readline().strip('\t').split('\t')
-totalData = np.asarray(totalData, dtype='float32').reshape((-1, 28, 18))
+totalData = np.asarray(totalData, dtype='float32').reshape((-1, image_height, image_width))
 totalData = totalData / 255
 #split = (int)(0.9 * totalData.shape[0])
 #trainData = totalData[:split]
@@ -44,25 +54,16 @@ print "[INFO] loading labels..."
 labels = open("../data/classes.txt")
 print "[INFO] finished loading labels from ../data/classes.txt."
 totalLabels = labels.readline().strip('\t').split('\t')
-#print totalLabels
 totalLabels = np.asarray(totalLabels, dtype='int32')
 trainLabels = totalLabels[train_index]
 testLabels = totalLabels[test_index]
+
 trainData, trainLabels = reformat(trainData, trainLabels)
 testData, testLabels = reformat(testData, testLabels)
 print('Training set', trainData.shape, trainLabels.shape)
 print('Test set', testData.shape, testLabels.shape)
 
-# constructing the graph
-batch_size = 50
-patch_size = 5
-depth = (32, 64)
-num_hidden = 1024
-image_height = 28
-image_width = 18
-num_labels = 10
-num_channels = 1
-
+# constructing stage
 graph = tf.Graph()
 
 with graph.as_default():
@@ -147,6 +148,7 @@ with graph.as_default():
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
+# running stage
 num_steps = 5000
 
 with tf.Session(graph=graph) as session:
