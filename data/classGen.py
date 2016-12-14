@@ -9,6 +9,6 @@ def main(argv):
     if (len(img_names)>0):  
         for name in img_names:
             file.write(name[0])
-            file.write('\n')
+            file.write('\t')
 if __name__ == "__main__":
     main(sys.argv[1:])
