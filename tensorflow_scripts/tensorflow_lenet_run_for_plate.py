@@ -31,18 +31,23 @@ print "[INFO] finished loading features from ../data/matrices.txt."
 totalData = features.readline().strip('\t').split('\t')
 totalData = np.asarray(totalData, dtype='float32').reshape((-1, 28, 18))
 totalData = totalData / 255
-split = (int)(0.9 * totalData.shape[0])
-trainData = totalData[:split]
-testData = totalData[split:]
+#split = (int)(0.9 * totalData.shape[0])
+#trainData = totalData[:split]
+#testData = totalData[split:]
+train_size = 0.9 * totalData.shape[0]
+train_index = np.random.choice(totalData.shape[0], train_size)
+test_index = np.asarray(list(set(np.arange(totalData.shape[0])) - set(train_index)))
+trainData = totalData[train_index]
+testData = totalData[test_index]
 
 print "[INFO] loading labels..."
 labels = open("../data/classes.txt")
 print "[INFO] finished loading labels from ../data/classes.txt."
 totalLabels = labels.readline().strip('\t').split('\t')
-print totalLabels
-totalLabels = np.asarray(totalLabels, dtype='int32').reshape((-1, 1))
-trainLabels = totalLabels[:split]
-testLabels = totalLabels[split:]
+#print totalLabels
+totalLabels = np.asarray(totalLabels, dtype='int32')
+trainLabels = totalLabels[train_index]
+testLabels = totalLabels[test_index]
 trainData, trainLabels = reformat(trainData, trainLabels)
 testData, testLabels = reformat(testData, testLabels)
 print('Training set', trainData.shape, trainLabels.shape)
@@ -54,7 +59,7 @@ patch_size = 5
 depth = (32, 64)
 num_hidden = 1024
 image_height = 28
-image_width = 28
+image_width = 18
 num_labels = 10
 num_channels = 1
 
@@ -84,7 +89,7 @@ with graph.as_default():
 
     # Three FC layer variables
     layer3_weights = tf.Variable(tf.truncated_normal(
-      [image_height // 4 * image_width // 4 * depth[1], num_hidden], stddev=0.1))
+      [image_height // 4 * image_width // 2 * depth[1], num_hidden], stddev=0.1))
     layer3_biases = tf.Variable(tf.zeros(num_hidden))
 
     layer4_weights = tf.Variable(tf.truncated_normal(
@@ -105,8 +110,8 @@ with graph.as_default():
         # conv layer2
         conv2 = tf.nn.conv2d(pool1, layer2_weights, [1, 1, 1, 1], padding='SAME')
         hidden2 = tf.nn.relu(conv2 + layer2_biases)
-        pool2 = tf.nn.max_pool(hidden2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                             padding='SAME', name='pool1')
+        pool2 = tf.nn.max_pool(hidden2, ksize=[1, 2, 1, 1], strides=[1, 2, 1, 1],
+                             padding='SAME', name='pool2')
         # Optional: normalization
         # norm2 = tf.nn.lrn(pool2, 4, bias=1.0,   alpha=0.001 / 9.0, beta=0.75,
         #                 name='norm1')
@@ -142,7 +147,7 @@ with graph.as_default():
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
-num_steps = 20000
+num_steps = 5000
 
 with tf.Session(graph=graph) as session:
     if(args["load_model"] > 0):
@@ -171,7 +176,9 @@ with tf.Session(graph=graph) as session:
             print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
             print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
             
-    print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))  
+    #print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
+    #print(np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), 1))
+    #print(testLabels)  
     if(args["save_model"] > 0):
         print('saving model to file...')
         save_path = saver.save(session, args["model_path"]) 
