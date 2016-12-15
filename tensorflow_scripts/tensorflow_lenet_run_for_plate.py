@@ -3,6 +3,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 import argparse
+from PIL import Image
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -40,35 +41,42 @@ def reformat(dataset, labels):
 def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
         / predictions.shape[0])
+
 if(args["test-mode"] < 0):
-print "[INFO] loading features..."
-features = open(data_path)
-print "[INFO] finished loading features from ../data/matrices.txt."
-totalData = features.readline().strip('\t').split('\t')
-totalData = np.asarray(totalData, dtype='float32').reshape((-1, image_height, image_width))
-totalData = totalData / 255
-#split = (int)(0.9 * totalData.shape[0])
-#trainData = totalData[:split]
-#testData = totalData[split:]
-train_size =(int)(0.9 * totalData.shape[0])
-train_index = np.random.choice(totalData.shape[0], train_size, replace=False)
-test_index = np.asarray(list(set(np.arange(totalData.shape[0])) - set(train_index)))
-trainData = totalData[train_index]
-testData = totalData[test_index]
+    print("[INFO] using training mode")
+    print("[INFO] loading features...")
+    features = open(data_path)
+    print("[INFO] finished loading features from %s" %data_path)
+    totalData = features.readline().strip('\t').split('\t')
+    totalData = np.asarray(totalData, dtype='float32').reshape((-1, image_height, image_width))
+    totalData = totalData / 255
+    #split = (int)(0.9 * totalData.shape[0])
+    #trainData = totalData[:split]
+    #testData = totalData[split:]
+    train_size =(int)(0.9 * totalData.shape[0])
+    train_index = np.random.choice(totalData.shape[0], train_size, replace=False)
+    test_index = np.asarray(list(set(np.arange(totalData.shape[0])) - set(train_index)))
+    trainData = totalData[train_index]
+    testData = totalData[test_index]
 
-print "[INFO] loading labels..."
-labels = open(label_path)
-print "[INFO] finished loading labels from ../data/classes.txt."
-totalLabels = labels.readline().strip('\t').split('\t')
-totalLabels = np.asarray(totalLabels, dtype='int32')
-trainLabels = totalLabels[train_index]
-testLabels = totalLabels[test_index]
+    print("[INFO] loading labels...")
+    labels = open(label_path)
+    print("[INFO] finished loading labels from %s" %label_path)
+    totalLabels = labels.readline().strip('\t').split('\t')
+    totalLabels = np.asarray(totalLabels, dtype='int32')
+    trainLabels = totalLabels[train_index]
+    testLabels = totalLabels[test_index]
 
-trainData, trainLabels = reformat(trainData, trainLabels)
-testData, testLabels = reformat(testData, testLabels)
-print('Training set', trainData.shape, trainLabels.shape)
-print('Test set', testData.shape, testLabels.shape)
+    trainData, trainLabels = reformat(trainData, trainLabels)
+    testData, testLabels = reformat(testData, testLabels)
+    print('Training set', trainData.shape, trainLabels.shape)
+    print('Test set', testData.shape, testLabels.shape)
 
+else:
+    print("using single image test mode!")
+    testData = np.array(Image.open(args["image-path"]), dtype='float32')
+    testData = np.reshape(testData, (1, image_height, image_width, num_channels))
+    
 # constructing stage
 graph = tf.Graph()
 
@@ -166,24 +174,26 @@ with tf.Session(graph=graph) as session:
         print('initializing model from scratch...')
         tf.initialize_all_variables().run()
         print('model Initialized.')
-    for step in range(num_steps):
-        # stochastic gradient descent
-        batch_index = np.random.choice(trainLabels.shape[0], batch_size)
-        batch_data = trainData[batch_index]
-        batch_labels = trainLabels[batch_index]
-        # batch gradient descent
-        #offset = (step * batch_size) % (trainLabels.shape[0] - batch_size)
-        #batch_data = trainData[offset:(offset + batch_size), :, :, :]
-        #batch_labels = trainLabels[offset:(offset + batch_size), :]
-        feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels, keep_prob:0.5}
-        
-        _, l, predictions = session.run(
-            [optimizer, loss, train_prediction], feed_dict=feed_dict)
-        if (step % 100 == 0):
-            print('Minibatch loss at step %d: %f' % (step, l))
-            print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
-            print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
+    if(args["test-mode"] < 0):
+        for step in range(num_steps):
+            # stochastic gradient descent
+            batch_index = np.random.choice(trainLabels.shape[0], batch_size)
+            batch_data = trainData[batch_index]
+            batch_labels = trainLabels[batch_index]
+            # batch gradient descent
+            #offset = (step * batch_size) % (trainLabels.shape[0] - batch_size)
+            #batch_data = trainData[offset:(offset + batch_size), :, :, :]
+            #batch_labels = trainLabels[offset:(offset + batch_size), :]
+            feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels, keep_prob:0.5}
             
+            _, l, predictions = session.run(
+                [optimizer, loss, train_prediction], feed_dict=feed_dict)
+            if (step % 100 == 0):
+                print('Minibatch loss at step %d: %f' % (step, l))
+                print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
+                print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
+    else:
+        print('test prediction: %s' %test_prediction.eval(session=session,feed_dict={keep_prob:1.0}))
     #print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     #print(np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), 1))
     #print(testLabels)  
