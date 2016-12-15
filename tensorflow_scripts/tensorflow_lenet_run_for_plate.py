@@ -12,8 +12,14 @@ ap.add_argument("-l", "--load_model", type=int, default=-1,
     help="(optional) whether or not pre-trained model should be loaded")
 ap.add_argument("-w", "--model_path", type=str,
     help="(optional) path to weights file")
+ap.add_argument("-t", "--test-mode", type=int, default=-1,
+    help="(optional) whether you are testing a prediction of a single image")
+ap.add_argument("-i", "--image-path", type=str,
+    help="(optionall) path to the image if you are using test mode" )
 args = vars(ap.parse_args())
 
+data_path = "../data/matrices.txt"
+label_path = "../data/classes.txt"
 # declare some hyperparameters
 batch_size = 50
 patch_size = 5
@@ -27,16 +33,16 @@ num_channels = 1
 # Preprocessing
 def reformat(dataset, labels):
     dataset = dataset.reshape(
-        (-1, image_height, image_width, nuum_channels)).astype(np.float32)
+        (-1, image_height, image_width, num_channels)).astype(np.float32)
     labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
     return dataset, labels
 
 def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
         / predictions.shape[0])
-
+if(args["test-mode"] < 0):
 print "[INFO] loading features..."
-features = open("../data/matrices.txt")
+features = open(data_path)
 print "[INFO] finished loading features from ../data/matrices.txt."
 totalData = features.readline().strip('\t').split('\t')
 totalData = np.asarray(totalData, dtype='float32').reshape((-1, image_height, image_width))
@@ -44,14 +50,14 @@ totalData = totalData / 255
 #split = (int)(0.9 * totalData.shape[0])
 #trainData = totalData[:split]
 #testData = totalData[split:]
-train_size = 0.9 * totalData.shape[0]
-train_index = np.random.choice(totalData.shape[0], train_size)
+train_size =(int)(0.9 * totalData.shape[0])
+train_index = np.random.choice(totalData.shape[0], train_size, replace=False)
 test_index = np.asarray(list(set(np.arange(totalData.shape[0])) - set(train_index)))
 trainData = totalData[train_index]
 testData = totalData[test_index]
 
 print "[INFO] loading labels..."
-labels = open("../data/classes.txt")
+labels = open(label_path)
 print "[INFO] finished loading labels from ../data/classes.txt."
 totalLabels = labels.readline().strip('\t').split('\t')
 totalLabels = np.asarray(totalLabels, dtype='int32')
