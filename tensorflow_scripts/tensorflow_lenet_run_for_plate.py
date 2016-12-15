@@ -13,9 +13,9 @@ ap.add_argument("-l", "--load_model", type=int, default=-1,
     help="(optional) whether or not pre-trained model should be loaded")
 ap.add_argument("-w", "--model_path", type=str,
     help="(optional) path to weights file")
-ap.add_argument("-t", "--test-mode", type=int, default=-1,
+ap.add_argument("-t", "--test_mode", type=int, default=-1,
     help="(optional) whether you are testing a prediction of a single image")
-ap.add_argument("-i", "--image-path", type=str,
+ap.add_argument("-i", "--image_path", type=str,
     help="(optionall) path to the image if you are using test mode" )
 args = vars(ap.parse_args())
 
@@ -42,7 +42,7 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
         / predictions.shape[0])
 
-if(args["test-mode"] < 0):
+if(args["test_mode"] < 0):
     print("[INFO] using training mode")
     print("[INFO] loading features...")
     features = open(data_path)
@@ -74,7 +74,7 @@ if(args["test-mode"] < 0):
 
 else:
     print("using single image test mode!")
-    testData = np.array(Image.open(args["image-path"]), dtype='float32')
+    testData = np.array(Image.open(args["image_path"]), dtype='float32')
     testData = np.reshape(testData, (1, image_height, image_width, num_channels))
     
 # constructing stage
@@ -174,7 +174,7 @@ with tf.Session(graph=graph) as session:
         print('initializing model from scratch...')
         tf.initialize_all_variables().run()
         print('model Initialized.')
-    if(args["test-mode"] < 0):
+    if(args["test_mode"] < 0):
         for step in range(num_steps):
             # stochastic gradient descent
             batch_index = np.random.choice(trainLabels.shape[0], batch_size)
@@ -193,7 +193,7 @@ with tf.Session(graph=graph) as session:
                 print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
                 print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     else:
-        print('test prediction: %s' %test_prediction.eval(session=session,feed_dict={keep_prob:1.0}))
+        print('test prediction: mostlikely to be a %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
     #print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     #print(np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), 1))
     #print(testLabels)  
