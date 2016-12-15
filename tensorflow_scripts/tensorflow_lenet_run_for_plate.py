@@ -31,7 +31,6 @@ image_width = 18
 num_labels = 10
 num_channels = 1
 
-# Preprocessing
 def reformat(dataset, labels):
     dataset = dataset.reshape(
         (-1, image_height, image_width, num_channels)).astype(np.float32)
@@ -42,6 +41,7 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
         / predictions.shape[0])
 
+# Preprocessing
 if(args["test_mode"] < 0):
     print("[INFO] using training mode")
     print("[INFO] loading features...")
@@ -194,10 +194,9 @@ with tf.Session(graph=graph) as session:
                 print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     else:
         print('test prediction: mostlikely to be a %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
-    #print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
-    #print(np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), 1))
-    #print(testLabels)  
     if(args["save_model"] > 0):
         print('saving model to file...')
         save_path = saver.save(session, args["model_path"]) 
         print("Model saved in file: %s" % save_path)
+    else:
+        print('you chose not to save model and exit.')
