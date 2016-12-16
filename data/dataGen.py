@@ -46,14 +46,26 @@ def main(argv):
     #         scipy.misc.imsave(name_gen, img_gen)
 
 # gaussian
-    print('performing gaussian blur on the original images...')
+    # print('performing gaussian blur on the original images...')
+    # img_names = os.listdir(img_dir)
+    # is_jpg = re.compile(r'.+?\.jpg')
+    # for name in img_names:
+    #     if(is_jpg.match(name)):
+    #         image = Image.open(img_dir + name)
+    #         image = image.filter(ImageFilter.GaussianBlur(radius=1)) 
+    #         image.save(img_dir + name.strip('g.jpg') + 'g.jpg')
+    # print('gaussian blur completed.')
+
+# rotation
+    print('performing rotation on the original images...')
     img_names = os.listdir(img_dir)
-    is_jpg = re.compile(r'.+?\.jpg')
+    is_jpg = re.compile(r'.+\.jpg')
     for name in img_names:
         if(is_jpg.match(name)):
             image = Image.open(img_dir + name)
-            image = image.filter(ImageFilter.GaussianBlur(radius=1)) 
-            image.save(img_dir + name.strip('g.jpg') + 'g.jpg')
-    print('gaussian blur completed.')
+            for i in (-20, -10, 10, 20):
+                image_r = image.rotate(i)
+                image_r.save(img_dir + name[:len(name) - 4] + 'r' + str(i) + '.jpg')
+    print('rotation completed.')
 if __name__ == "__main__":
     main(sys.argv[1:])
