@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import re
 
 def main(argv):
-    img_dir = "tiny_patches/"
+    img_dir = "madeups_gen/"
     img_list = []  
     img_srcs = os.listdir(img_dir)
     file=open('matrices.txt','w')
