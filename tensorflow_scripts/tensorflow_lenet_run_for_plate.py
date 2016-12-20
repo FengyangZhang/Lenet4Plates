@@ -4,6 +4,7 @@ from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 import argparse
 from PIL import Image
+from time import clock
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -21,6 +22,7 @@ args = vars(ap.parse_args())
 
 data_path = "../data/matrices.txt"
 label_path = "../data/classes.txt"
+
 # declare some hyperparameters
 batch_size = 50
 patch_size = 5
@@ -193,6 +195,7 @@ with tf.Session(graph=graph) as session:
                 print('[INFO] Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
                 print('[INFO] Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     else:
+        begin = clock()
         print('[INFO] test prediction: mostlikely to be %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
     if(args["save_model"] > 0):
         print('[INFO] saving model to file...')
@@ -200,3 +203,5 @@ with tf.Session(graph=graph) as session:
         print("[INFO] Model saved in file: %s" % save_path)
     else:
         print('[INFO] you chose not to save model and exit.')
+end = clock()
+print('[INFO] total time used: %f' %(end - begin))
