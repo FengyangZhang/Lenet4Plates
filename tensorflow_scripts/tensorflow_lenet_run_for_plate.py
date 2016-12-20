@@ -69,11 +69,11 @@ if(args["test_mode"] < 0):
 
     trainData, trainLabels = reformat(trainData, trainLabels)
     testData, testLabels = reformat(testData, testLabels)
-    print('Training set', trainData.shape, trainLabels.shape)
-    print('Test set', testData.shape, testLabels.shape)
+    print('[INFO] Training set', trainData.shape, trainLabels.shape)
+    print('[INFO] Test set', testData.shape, testLabels.shape)
 
 else:
-    print("using single image test mode!")
+    print("[INFO] using single image test mode!")
     testData = np.array(Image.open(args["image_path"]), dtype='float32')
     testData = np.reshape(testData, (1, image_height, image_width, num_channels))
     
@@ -167,13 +167,13 @@ num_steps = 5000
 
 with tf.Session(graph=graph) as session:
     if(args["load_model"] > 0):
-        print('restoring model from file...')
+        print('[INFO] restoring model from file...')
         saver.restore(session, args['model_path'])
-        print('model restored.')
+        print('[INFO] model restored.')
     else:
-        print('initializing model from scratch...')
+        print('[INFO] initializing model from scratch...')
         tf.initialize_all_variables().run()
-        print('model Initialized.')
+        print('[INFO] model Initialized.')
     if(args["test_mode"] < 0):
         for step in range(num_steps):
             # stochastic gradient descent
@@ -189,14 +189,14 @@ with tf.Session(graph=graph) as session:
             _, l, predictions = session.run(
                 [optimizer, loss, train_prediction], feed_dict=feed_dict)
             if (step % 100 == 0):
-                print('Minibatch loss at step %d: %f' % (step, l))
-                print('Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
-                print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
+                print('[INFO] Minibatch loss at step %d: %f' % (step, l))
+                print('[INFO] Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
+                print('[INFO] Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     else:
-        print('test prediction: mostlikely to be a %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
+        print('[INFO] test prediction: mostlikely to be %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
     if(args["save_model"] > 0):
-        print('saving model to file...')
+        print('[INFO] saving model to file...')
         save_path = saver.save(session, args["model_path"]) 
-        print("Model saved in file: %s" % save_path)
+        print("[INFO] Model saved in file: %s" % save_path)
     else:
-        print('you chose not to save model and exit.')
+        print('[INFO] you chose not to save model and exit.')
