@@ -1,14 +1,18 @@
 import sys
 import getopt
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageChops
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.misc
 import os
 import re
+import PIL.ImageOps
 
 def main(argv):
-    img_dir = 'tiny_patches/'
+    in_dir = 'madeups/'
+    out_dir = 'madeups_gen/'
+    img_names = os.listdir(out_dir)
+    is_jpg = re.compile(r'.+?\.jpg')
     # try:
     #     opts, args = getopt.getopt(argv, "hi:", ["help=", "image="])
     # except getopt.GetoptError:
@@ -23,49 +27,42 @@ def main(argv):
     #         symbol = arg[13]
     # print ('image shape : %d x %d' % (img_orig.shape[0], img_orig.shape[1]))
     # img_height, img_width = img_orig.shape
-
-# move a pixel to the left / down
-    # for i in range(0, 5):
-    #     i = i + 1
-    #     for j in range(0, 8):
-    #         j = j + 1
-    #         img_gen = np.zeros_like(img_orig)
-    #         img_gen[:img_height - j, :img_width - i] = img_orig[j:, i:]
-    #         img_gen[img_height - j:, img_width - i:] = img_orig[:j, :i]
-    #         name_gen = 'tiny_patches/%s%d_%d.jpg' %(symbol, i, j)
-    #         scipy.misc.imsave(name_gen, img_gen)
-# move a pixel to the right / up
-    # for i in range(0, 5):
-    #     i += 1
-    #     for j in range(0, 8):
-    #         j += 1
-    #         img_gen = np.zeros_like(img_orig)
-    #         img_gen[j:, i:] = img_orig[:img_height - j, :img_width - i]
-    #         img_gen[:j, :i] = img_orig[img_height - j:, img_width - i:]
-    #         name_gen = 'tiny_patches/%s%d__%d.jpg' %(symbol, i, j)
-    #         scipy.misc.imsave(name_gen, img_gen)
-
-# gaussian
-    # print('performing gaussian blur on the original images...')
-    # img_names = os.listdir(img_dir)
-    # is_jpg = re.compile(r'.+?\.jpg')
+# invert the image
     # for name in img_names:
     #     if(is_jpg.match(name)):
-    #         image = Image.open(img_dir + name)
-    #         image = image.filter(ImageFilter.GaussianBlur(radius=1)) 
-    #         image.save(img_dir + name.strip('g.jpg') + 'g.jpg')
-    # print('gaussian blur completed.')
+    #         image = Image.open(in_dir + name)
+    #         inverted_image = PIL.ImageOps.invert(image)
+    #         inverted_image.save(in_dir + name)
+# convert to greyscale
+    # for name in img_names:
+    #     if(is_jpg.match(name)):
+    #         image = Image.open(in_dir + name).convert('L')
+    #         image.save(in_dir + name)
 
+# shifting pixels
+    # for name in img_names:
+    #     if(is_jpg.match(name)):
+    #         img_orig = Image.open(in_dir + name)
+    #         for i in range(-3, 4):
+    #             for j in range(-5, 6):
+    #                 img_gen = ImageChops.offset(img_orig, i, j)
+    #                 img_gen.save(out_dir + name.strip('.jpg') + '_%d%d.jpg' %(i, j))
+# gaussian
+    # print('performing gaussian blur on the original images...')
+    # for name in img_names:
+    #     if(is_jpg.match(name)):
+    #         image = Image.open(out_dir + name)
+    #         image = image.filter(ImageFilter.GaussianBlur(radius=1)) 
+    #         image.save(out_dir + name.strip('g.jpg') + 'g.jpg')
+    # print('gaussian blur completed.')
 # rotation
     print('performing rotation on the original images...')
-    img_names = os.listdir(img_dir)
-    is_jpg = re.compile(r'.+\.jpg')
     for name in img_names:
         if(is_jpg.match(name)):
-            image = Image.open(img_dir + name)
-            for i in (-20, -10, 10, 20):
+            image = Image.open(out_dir + name)
+            for i in (-10, 10):
                 image_r = image.rotate(i)
-                image_r.save(img_dir + name[:len(name) - 4] + 'r' + str(i) + '.jpg')
+                image_r.save(out_dir + name[:len(name) - 4] + 'r' + str(i) + '.jpg')
     print('rotation completed.')
 if __name__ == "__main__":
     main(sys.argv[1:])
