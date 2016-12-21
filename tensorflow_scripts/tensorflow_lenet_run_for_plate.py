@@ -4,6 +4,7 @@ from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 import argparse
 from PIL import Image
+from time import clock
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -21,14 +22,15 @@ args = vars(ap.parse_args())
 
 data_path = "../data/matrices.txt"
 label_path = "../data/classes.txt"
+
 # declare some hyperparameters
-batch_size = 50
+batch_size = 500
 patch_size = 5
 depth = (32, 64)
 num_hidden = 1024
 image_height = 28
 image_width = 18
-num_labels = 10
+num_labels = 65
 num_channels = 1
 
 def reformat(dataset, labels):
@@ -42,7 +44,7 @@ def accuracy(predictions, labels):
         / predictions.shape[0])
 
 # Preprocessing
-if(args["test_mode"] < 0):
+if(args["test_mode"] <= 0):
     print("[INFO] using training mode")
     print("[INFO] loading features...")
     features = open(data_path)
@@ -166,6 +168,7 @@ with graph.as_default():
 num_steps = 5000
 
 with tf.Session(graph=graph) as session:
+    begin = clock()
     if(args["load_model"] > 0):
         print('[INFO] restoring model from file...')
         saver.restore(session, args['model_path'])
@@ -174,7 +177,7 @@ with tf.Session(graph=graph) as session:
         print('[INFO] initializing model from scratch...')
         tf.initialize_all_variables().run()
         print('[INFO] model Initialized.')
-    if(args["test_mode"] < 0):
+    if(args["test_mode"] <= 0):
         for step in range(num_steps):
             # stochastic gradient descent
             batch_index = np.random.choice(trainLabels.shape[0], batch_size)
@@ -200,3 +203,5 @@ with tf.Session(graph=graph) as session:
         print("[INFO] Model saved in file: %s" % save_path)
     else:
         print('[INFO] you chose not to save model and exit.')
+end = clock()
+print('[INFO] total time used: %f' %(end - begin))
