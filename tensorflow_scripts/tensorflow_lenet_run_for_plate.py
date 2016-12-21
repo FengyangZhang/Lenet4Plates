@@ -24,13 +24,13 @@ data_path = "../data/matrices.txt"
 label_path = "../data/classes.txt"
 
 # declare some hyperparameters
-batch_size = 50
+batch_size = 500
 patch_size = 5
 depth = (32, 64)
 num_hidden = 1024
 image_height = 28
 image_width = 18
-num_labels = 10
+num_labels = 65
 num_channels = 1
 
 def reformat(dataset, labels):
@@ -44,7 +44,7 @@ def accuracy(predictions, labels):
         / predictions.shape[0])
 
 # Preprocessing
-if(args["test_mode"] < 0):
+if(args["test_mode"] <= 0):
     print("[INFO] using training mode")
     print("[INFO] loading features...")
     features = open(data_path)
@@ -168,6 +168,7 @@ with graph.as_default():
 num_steps = 5000
 
 with tf.Session(graph=graph) as session:
+    begin = clock()
     if(args["load_model"] > 0):
         print('[INFO] restoring model from file...')
         saver.restore(session, args['model_path'])
@@ -176,7 +177,7 @@ with tf.Session(graph=graph) as session:
         print('[INFO] initializing model from scratch...')
         tf.initialize_all_variables().run()
         print('[INFO] model Initialized.')
-    if(args["test_mode"] < 0):
+    if(args["test_mode"] <= 0):
         for step in range(num_steps):
             # stochastic gradient descent
             batch_index = np.random.choice(trainLabels.shape[0], batch_size)
@@ -195,7 +196,6 @@ with tf.Session(graph=graph) as session:
                 print('[INFO] Minibatch accuracy: %.1f%%' % accuracy(predictions, batch_labels))
                 print('[INFO] Test accuracy: %.1f%%' % accuracy(test_prediction.eval(session=session,feed_dict={keep_prob:1.0}), testLabels))
     else:
-        begin = clock()
         print('[INFO] test prediction: mostlikely to be %s' %np.argmax(test_prediction.eval(session=session,feed_dict={keep_prob:1.0})))
     if(args["save_model"] > 0):
         print('[INFO] saving model to file...')
